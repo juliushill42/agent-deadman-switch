@@ -1,0 +1,64 @@
+name: verify
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            pkg-config \
+            libssl-dev \
+            zlib1g-dev
+
+      - name: Shell syntax
+        run: |
+          while IFS= read -r -d '' f; do
+            bash -n "$f"
+          done < <(
+            find . \
+              -path './.git' -prune -o \
+              -path './target' -prune -o \
+              -path './web/node_modules' -prune -o \
+              -name '*.sh' \
+              -print0
+          )
+
+      - name: Rust format
+        run: cargo fmt --all -- --check
+
+      - name: Rust tests
+        run: cargo test --workspace
+
+      - name: Rust release build
+        run: cargo build --workspace --release
+
+      - name: Web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Web build
+        working-directory: web
+        run: npm run build

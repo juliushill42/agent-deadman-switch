@@ -1,0 +1,23 @@
+{
+  "product": "Agent Deadman Switch",
+  "repository": "agent-deadman-switch",
+  "owner": "Julius Cameron Hill / Titan Universal AI LLC",
+  "origin": "urn:titanu:marathon:agent-deadman-switch",
+  "watermark": "\":\"",
+  "architecture": {
+    "control_core": "Rust",
+    "watchdog_agent": "Rust",
+    "control_api": "Rust",
+    "dashboard": "TypeScript + React",
+    "transactional_state": "PostgreSQL",
+    "event_transport": "Apache Kafka KRaft",
+    "primary_host": "Android + Termux",
+    "paid_api_dependency": false
+  },
+  "control_model": {
+    "remote_arbitrary_shell": false,
+    "locally_configured_workload_only": true,
+    "fail_closed_supported": true,
+    "deterministic_policy_engine": true
+  }
+}
