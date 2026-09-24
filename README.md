@@ -2,97 +2,168 @@
 
 Deterministic containment for supervised agents and autonomous workloads.
 
-`":"`
+The system gives a running local workload a hard control boundary and keeps a node-side watchdog capable of failing closed when the control plane disappears.
 
-## What it does
+## Implemented architecture
 
-Agent Deadman Switch gives a running agent a hard control boundary.
+- Rust deterministic policy/core crate.
+- Rust control API.
+- Rust node watchdog.
+- TypeScript + React operational dashboard.
+- PostgreSQL state.
+- Apache Kafka KRaft event stream.
+- Local token/shared-secret authentication.
+- Android/Termux-first runtime path.
+- No root requirement.
+- No systemd requirement.
+- No paid API dependency.
 
-It detects missed heartbeats, control-plane loss, repeated workload failures,
-manual containment, and manual stop directives.
+## Containment conditions
 
-It can arm or disarm supervision, trip and contain workloads, recover contained
-agents, fail closed locally when the control plane disappears, and preserve
-state transitions in PostgreSQL and Kafka.
+The build handles:
 
-## Architecture
+- missed heartbeats
+- control-plane loss
+- repeated workload failures
+- manual containment
+- manual stop directives
 
-- Rust deterministic policy engine
-- Rust control API
-- Rust node watchdog
-- TypeScript + React operational dashboard
-- PostgreSQL canonical state
-- Apache Kafka KRaft event stream
-- Android/Termux-first
-- no Docker requirement
-- no root requirement
-- no systemd requirement
-- no paid API dependency
+It can:
 
-## Build
+- arm or disarm supervision
+- trip and contain workloads
+- recover contained agents
+- fail closed locally
+- preserve state transitions through PostgreSQL and Kafka
 
-    ./bootstrap.sh
+## Bootstrap
 
-## Launch
+```bash
+./bootstrap.sh
+```
 
-    ./run.sh
+On first launch the bootstrap creates `.env` with generated:
 
-Dashboard: http://127.0.0.1:4176
+- admin token
+- agent shared secret
+- PostgreSQL password
 
-Control API: http://127.0.0.1:8794
+It then:
 
-## Tokens
+1. Starts PostgreSQL.
+2. Applies the schema.
+3. Starts Kafka in KRaft mode.
+4. Installs dashboard dependencies.
+5. Formats Rust.
+6. Runs repository verification.
+7. Launches the stack unless `BUILD_ONLY=1`.
 
-    ./scripts/show-tokens.sh
+Build/verify without launching:
+
+```bash
+BUILD_ONLY=1 ./bootstrap.sh
+```
+
+## Local endpoints
+
+Dashboard:
+
+```text
+http://127.0.0.1:4176
+```
+
+Control API:
+
+```text
+http://127.0.0.1:8794
+```
 
 ## Supervise a real local process
 
-Set the workload locally before starting:
+The executable is configured locally before launch:
 
-    export DEADMAN_WORKLOAD_BIN="$HOME/bin/my-agent"
-    export DEADMAN_WORKLOAD_ARGS="--serve --port 8000"
-    ./run.sh
+```bash
+export DEADMAN_WORKLOAD_BIN="$HOME/bin/my-agent"
+export DEADMAN_WORKLOAD_ARGS="--serve --port 8000"
+./run.sh
+```
 
-The remote control plane does not choose the executable. The watchdog owns only
-the child process it launches.
+The remote control plane does not select the executable. The watchdog owns only the child process it launches.
 
-## Inspect agents
+## Operations
 
-    ./scripts/agents.sh
+Show generated tokens:
 
-## Contain
+```bash
+./scripts/show-tokens.sh
+```
 
-    ./scripts/contain.sh AGENT_UUID "heartbeat anomaly"
+Inspect agents:
 
-## Recover
+```bash
+./scripts/agents.sh
+```
 
-    ./scripts/recover.sh AGENT_UUID
+Contain an agent:
+
+```bash
+./scripts/contain.sh AGENT_UUID "heartbeat anomaly"
+```
+
+Recover an agent:
+
+```bash
+./scripts/recover.sh AGENT_UUID
+```
+
+Stop:
+
+```bash
+./stop.sh
+```
 
 ## Default policy
 
-- heartbeat warning: 15 seconds
-- hard timeout: 30 seconds
-- consecutive failures: 3
-- fail closed: true
+```text
+heartbeat warning       15 seconds
+hard timeout            30 seconds
+consecutive failures     3
+fail closed             true
+```
 
 ## Verify
 
-    ./scripts/verify.sh
+```bash
+./scripts/verify.sh
+```
 
-## Runtime smoke
+Runtime smoke:
 
-After launch:
+```bash
+./scripts/smoke.sh
+```
 
-    ./scripts/smoke.sh
+## Workspace
 
-## Stop
+Rust members:
 
-    ./stop.sh
+```text
+crates/deadman-core
+apps/deadman-control
+apps/deadman-agent
+```
+
+Supporting runtime:
+
+```text
+web/
+infra/
+migrations/
+scripts/
+```
 
 ## Provenance
 
-Owner: Julius Cameron Hill / Titan Universal AI LLC
-
-Origin: `urn:titanu:marathon:agent-deadman-switch`
-
+Owner: Julius Cameron Hill / Titan Universal AI LLC  
+Origin: `urn:titanu:marathon:agent-deadman-switch`  
 Watermark: `":"`
